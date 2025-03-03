@@ -18,8 +18,11 @@ https://x.com/splinter_code/status/1785359393246138555
 Nathan Blondel @slowerzs  
 https://github.com/Slowerzs/PPLSystem/  
 
-
 At the time of writing this, most EDR's don't flag this operation.  
+
+# Resolution of this security issue
+A tweet announced that it will be fixed in next version : https://x.com/depletionmode/status/1797887978506977551
+
 
 # Disclaimer  
 This tool is intended solely for academic purposes and must not be utilized for any unlawful activities or any activities that breach ethical guidelines and regulations.
