@@ -1,6 +1,6 @@
 ## GoLang implementation of the Live Kernel Dumper with UserSpace Memory
 
-The goal of this project is to dump the Live Kernel Memory with the UserSpace memory, in order to extract lsass secrets with the mimilib.dll without being blocked by an EDR or an AV software.
+The goal of this project is to dump the Live Kernel Memory with the UserSpace memory, in order to extract lsass secrets with the mimilib.dll without being blocked by an EDR or an AV software. Now, this program will do the same as a taskmanager but will let you choose your output location of the file.
 
 This is possible from version : **Windows 11 > 22H2**
 
@@ -27,6 +27,19 @@ A tweet announced that it will be fixed in next version : https://x.com/depletio
 # Disclaimer  
 This tool is intended solely for academic purposes and must not be utilized for any unlawful activities or any activities that breach ethical guidelines and regulations.
 
+# Standard way to dump with Task Manager  
+-Click Details  
+-Select process ID 4 SYSTEM  
+- Create live kernel memory dump file -> change memory dump settings
+  ![taskmanager](./taskmanager1.jpg?raw=true "change memory dump settings")
+- Add Capture user page  
+  ![taskmanager](./taskmanager2.jpg?raw=true "add Capture user page")
+- Dump Full live kernel memory dump  
+  ![taskmanager](./taskmanager3.jpg?raw=true "Dump Full live kernel memory dump")
+- File will be saved at : C:\Users\<username>\AppData\Local\Microsoft\Windows\TaskManager\LiveKernelDumps\livedump.DMP  
+
+
+
 # Build
 ```
 cd kerneldumperwin11
@@ -44,5 +57,5 @@ garble -tiny -literals -seed=random build kerneldumperwin11.go
 # Run on a Win11 machine
 ![dumping](./dumping1.jpg?raw=true "Dumping on Win11 machines")
 
-# Analyse on a machine
+# Extract secrets with mimilib.dll with WinDBG on another machine
 ![extracting creds](./dumping2.JPG?raw=true "Analysing dump file with WinDBG and mimilib.dll")
